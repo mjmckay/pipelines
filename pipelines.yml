@@ -116,7 +116,7 @@ pipelines:
         configuration:
           targetRepository: demo-pipelines
           integrations:
-            - name: demoArt
+            - name: artifactory
           inputResources:
             - name: appl_build_info
           outputResources:
