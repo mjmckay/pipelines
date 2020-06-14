@@ -42,7 +42,7 @@ pipelines:
         configuration:
           npmArgs: --no-progress --no-audit
           sourceLocation: .
-          repositoryName: npm-dev-virtual
+          repositoryName: demo-npm-virtual
           inputResources:
             - name: fe_gitRepo
           integrations:
@@ -66,7 +66,7 @@ pipelines:
       - name: publish_frontend
         type: NpmPublish
         configuration:
-          repositoryName: npm-libs-local
+          repositoryName: demo-npm-virtual
           inputSteps:
             - name: pack_frontend
           integrations:
