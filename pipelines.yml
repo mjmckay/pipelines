@@ -93,7 +93,7 @@ pipelines:
         type: Bash
         configuration:
           environmentVariables:
-            dockerImageName: 35.193.25.121:8082/demo-docker-virtual/app
+            dockerImageName: mjmckay-demo-docker-virtual.jfrog.io/app
             dockerImageTag: ${run_number}
           inputResources:
             - name: be_gitRepo
