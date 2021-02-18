@@ -5,25 +5,19 @@ resources:
       path: mjmckay/java-backend
       gitProvider: mjmckay_github
 
-  - name: fe_gitRepo
-    type: GitRepo
-    configuration:
-      path: mjmckay/vue-frontend
-      gitProvider: mjmckay_github
-
   - name: appl_build_info
     type: BuildInfo
     configuration:
       sourceArtifactory: demoArt
-      buildName: backend_build
-      buildNumber: 1
+      buildName: devnexus_build
+      buildNumber: 100
 
   - name: appl_promoted_build_info
     type: BuildInfo
     configuration:
       sourceArtifactory: demoArt
-      buildName: backend_build
-      buildNumber: 1
+      buildName: devnexus_build
+      buildNumber: 100
 
 pipelines:
   - name: demo_application
@@ -51,56 +45,17 @@ pipelines:
             - javac -version
             - mvn --version
 
-      - name: bld_frontend
-        type: NpmBuild
-        configuration:
-          npmArgs: --no-progress --no-audit
-          sourceLocation: .
-          repositoryName: demo-npm-virtual
-          inputResources:
-            - name: fe_gitRepo
-          integrations:
-            - name: demoArt
-
-      - name: pack_frontend
-        type: Bash
-        configuration:
-          inputSteps:
-            - name: bld_frontend
-          integrations:
-            - name: demoArt
-        execution:
-          onStart:
-            - export tempStateLocation="$step_tmp_dir/npmSourceState"
-            - restore_run_files npmBuildInputGitRepo $tempStateLocation
-            - pushd $tempStateLocation
-            - npm run build
-            - add_run_files $tempStateLocation/. npmBuildInputGitRepo
-
-      - name: publish_frontend
-        type: NpmPublish
-        configuration:
-          repositoryName: demo-npm-virtual
-          inputSteps:
-            - name: pack_frontend
-          integrations:
-            - name: demoArt
-        execution:
-          onStart:
-            - export inputNpmBuildStepName="bld_frontend"
-
       - name: build_app
         type: Bash
         configuration:
           environmentVariables:
-            dockerImageName: 35.193.25.121:8082/demo-docker-virtual/app
+            dockerImageName: mjmckay.jfrog.io/devnexus-docker/devnexus
             dockerImageTag: ${run_number}
           inputResources:
             - name: be_gitRepo
               trigger: false
           inputSteps:
             - name: bld_backend
-            - name: publish_frontend
           integrations:
             - name: demoArt
         execution:
@@ -111,6 +66,7 @@ pipelines:
             - add_run_variables buildStepName=${step_name}
             - add_run_variables ${step_name}_buildNumber=${run_number}
             - add_run_variables ${step_name}_buildName=${pipeline_name}
+            - mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
             - docker build --pull --no-cache -t $dockerImageName:$dockerImageTag --build-arg REGISTRY=${int_demoArt_url} --build-arg APIKEY=${int_demoArt_apikey} .
             - jfrog rt bce $pipeline_name $run_number
             - jfrog rt docker-push $dockerImageName:$dockerImageTag demo_docker-virtual --build-name=$pipeline_name --build-number=$run_number
@@ -128,7 +84,7 @@ pipelines:
       - name: promote_app_build
         type: PromoteBuild
         configuration:
-          targetRepository: demo-docker-staging-local
+          targetRepository: docker-production
           integrations:
             - name: demoArt
           inputResources:
